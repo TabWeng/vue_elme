@@ -15,7 +15,34 @@ var proxyTable = config.dev.proxyTable
 
 var app = express()
 
+//mock数据
+var appdata = require('../data.json');
+var seller = appData.seller,
+    goods = appData.goods,
+    ratings = appData.ratings;
 
+// 路由数据
+var apiRoutes = express.Router();
+apiRoutes.get('/seller', function(req, res){
+  res.json({
+    errno: 0,
+    seller: seller
+  });
+});
+apiRoutes.get('/goods', function(req, res){
+  res.json({
+    errno: 0,
+    seller: goods
+  });
+});
+apiRoutes.get('/ratings', function(req, res){
+  res.json({
+    errno: 0,
+    seller: ratings
+  });
+});
+
+app.use('/api', apiRoutes);
 
 var compiler = webpack(webpackConfig)
 
