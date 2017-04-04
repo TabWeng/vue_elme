@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "vue": "^1.0.21",
+    "vue-router": "^0.7.13",
+    "vue-resource": "^1.0.1",
     "babel-runtime": "^6.0.0"
   },
   "devDependencies": {
@@ -22,6 +24,7 @@
     "babel-register": "^6.0.0",
     "connect-history-api-fallback": "^1.1.0",
     "css-loader": "^0.23.0",
+    "stylus-loader": "^2.5.1",
     "eventsource-polyfill": "^0.9.6",
     "express": "^4.13.3",
     "extract-text-webpack-plugin": "^1.0.1",
