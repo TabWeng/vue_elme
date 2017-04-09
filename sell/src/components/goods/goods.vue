@@ -1,8 +1,8 @@
 <template>
   <div class="goods">
-    <div class="menu-wrapper">
+    <div class="menu-wrapper" v-el:menu-wrapper>
       <ul>
-        <li v-for="item in goods" class="menu-item">
+        <li v-for="item in goods" class="menu-item" :class="{'current': currentIndex === $index}" @click="selectMenu($index, $event)">
           <span class="text border-1px">
             <span v-show="item.type>0" class="icon" :class="classMap[item.type]"></span>
             {{item.name}}
@@ -10,9 +10,9 @@
         </li>
       </ul>
     </div>
-    <div class="food-wrapper">
+    <div class="food-wrapper" v-el:food-wrapper>
       <ul>
-        <li v-for="item in goods" class="food-list">
+        <li v-for="item in goods" class="food-list food-list-hook">
           <h1 class="title">{{item.name}}</h1>
           <ul>
             <li v-for="food in item.foods" class="food-item border-1px">
@@ -26,13 +26,15 @@
                 <p class="decs">{{food.description}}</p>
                 <!--食品情况-->
                 <div class="extra">
-                  <span>月销{{food.sellCount}}份</span>
-                  <span>好评率{{food.rating}}%</span>
+                  <span class="count">月销{{food.sellCount}}份</span><span>好评率{{food.rating}}%</span>
                 </div>
                 <!--食品价格-->
                 <div class="price">
-                  <span>￥{{food.price}}</span>
-                  <span v-show="food.oldPrice">￥{{food.oldPrice}}</span>
+                  <span class="now"><span class="sign">￥</span>{{food.price}}</span>
+                  <span class="old" v-show="food.oldPrice">￥{{food.oldPrice}}</span>
+                </div>
+                <div class="food-select-wrapper">
+                  <food-select :food="food"></food-select>
                 </div>
               </div>
             </li>
@@ -40,10 +42,15 @@
         </li>
       </ul>
     </div>
+    <shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
+
+  import BScroll from "better-scroll";
+  import shopcart from "components/shopcart/shopcart";
+  import  foodSelect from "components/foodSelect/foodSelect";
 
   const ERR_OK = 0;
 
@@ -55,7 +62,21 @@
     },
     data() {
       return {
-        goods:[]
+        goods:[],
+        listHeight:[],
+        scrollY: 0
+      }
+    },
+    computed: {
+      currentIndex() {
+        for(let i = 0; i < this.listHeight.length; i++){
+          let height1 = this.listHeight[i];
+          let height2 = this.listHeight[i+1];
+          if(!height2 || (this.scrollY >= height1 && this.scrollY < height2)){
+            return i;
+          }
+        }
+        return 0;
       }
     },
     created() {
@@ -64,8 +85,48 @@
         response = response.body;
         if(response.error === ERR_OK){
           this.goods = response.goods;
+          this.$nextTick(() => {
+            this._initScroll();
+            this._calculateHeight();
+          });
         }
       });
+    },
+    methods: {
+      selectMenu(index, event) {
+        if(!event._constructed){
+          return;
+        }
+        let footList = this.$els.foodWrapper.getElementsByClassName('food-list-hook');
+        let el = footList[index];
+        this.foodsScroll.scrollToElement(el,300);
+      },
+      _initScroll() {
+        this.menuScroll = new BScroll(this.$els.menuWrapper,{
+          click: true
+        });
+        this.foodsScroll = new BScroll(this.$els.foodWrapper,{
+          click: true,
+          probeType: 3
+        });
+        this.foodsScroll.on('scroll', (pos) => {
+          this.scrollY = Math.abs(Math.round(pos.y));
+        })
+      },
+      _calculateHeight() {
+        let foodList = this.$els.foodWrapper.getElementsByClassName('food-list-hook');
+        let height = 0;
+        this.listHeight.push(height);
+        for(let i = 0; i < foodList.length; i++){
+          let item = foodList[i];
+          height += item.clientHeight;
+          this.listHeight.push(height);
+        }
+      }
+    },
+    components: {
+      shopcart,
+      foodSelect
     }
   };
 </script>
@@ -87,7 +148,7 @@
       background: #f3f5f7
       .menu-item
         display: table
-        width: 54px
+        width: 56px
         height: 56px
         padding: 0 12px
         line-height: 14px
@@ -117,6 +178,14 @@
           vertical-align: middle
           border-1px(rgba(7, 17, 27, 0.1))
           font-size: 12px
+        &.current
+          position: relative
+          margin-top: -1px
+          z-index: 10
+          background: #fff
+          font-weight: 700
+          .text
+            border-none()
     .food-wrapper
       flex: 1
       .title
@@ -133,7 +202,7 @@
         margin: 18px
         padding-bottom: 18px
         border-1px(rgba(7, 17, 27, 0.1))
-        &:after-child
+        &:last-child
           border-none()
           margin-bottom: 0
         .icon
@@ -141,25 +210,44 @@
           margin-right: 10px
           img
             border-radius: 1px
+        .content
+          flex: 1
+          .name
+            margin: 2px 0 8px 0
+            height: 14px
+            line-height: 14px
+            font-size: 14px
+            color: rgb(7, 17, 27)
+          .decs,.extra
+            line-height: 10px
+            color: rgb(147, 153, 159)
+            font-size: 10px
+          .decs
+            line-height: 12px
+            margin-bottom: 8px
+          .extra
+            .count
+              margin-right: 12px
+          .price
+            height: 24px
+            line-height: 24px
+            font-weight: 700
+            .now
+              font-size: 14px
+              color: rgb(240, 20, 20)
+              .sign
+                font-size: 10px
+            .old
+              text-decoration: line-through
+              font-size: 10px
+              color: rgb(147, 153, 159)
 
 
-        .name
-          margin: 2px 0 8px 0
-          height: 14px
-          line-height: 14px
-          color: rgb(7, 17, 27)
-          font-size: 14px
-        .decs
-          margin-bottom: 8px
-          color: rgb(147, 153, 159)
-          font-size: 10px
-        .extra
-          margin-bottom: 8px
-          color: rgb(147, 153, 159)
-          font-size: 10px
-          &:first-child
-            margin-left: 12px
-        .price
+          .food-select-wrapper
+            position: absolute
+            right: -6px
+            bottom: 10px
+
 
 
 
