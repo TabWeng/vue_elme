@@ -42,7 +42,7 @@
         </li>
       </ul>
     </div>
-    <shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
+    <shopcart v-ref:shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice" :select-foods="selectFoods"></shopcart>
   </div>
 </template>
 
@@ -77,6 +77,17 @@
           }
         }
         return 0;
+      },
+      selectFoods() {
+        let foods = [];
+        this.goods.forEach((good) => {
+          good.foods.forEach((food) => {
+            if(food.count){
+              foods.push(food);
+            }
+          });
+        });
+        return foods;
       }
     },
     created() {
@@ -100,6 +111,9 @@
         let footList = this.$els.foodWrapper.getElementsByClassName('food-list-hook');
         let el = footList[index];
         this.foodsScroll.scrollToElement(el,300);
+      },
+      _drop(target){
+        this.$refs.shopcart.drop(target);
       },
       _initScroll() {
         this.menuScroll = new BScroll(this.$els.menuWrapper,{
@@ -127,6 +141,11 @@
     components: {
       shopcart,
       foodSelect
+    },
+    events: {
+      'car_add':function(target) {
+        this._drop(target);
+      }
     }
   };
 </script>
